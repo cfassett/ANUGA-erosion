@@ -3,8 +3,8 @@
 
 1) Notes on installing ANUGA hydro:<br>
 See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br>
-<br>
-<br>I've recently had consistent sucess in Windows and Linux installing the ANUGA dependencies via conda or Anaconda (https://www.anaconda.com/download/).  I create an ANUGA Anaconda environment, say "anuga" using Anaconda navigator, then at an Anaconda prompt, then "activate anuga" where "anuga here" is whatever the anuga environment is called.  The first time you need to follow the conda instructions in the INSTALL file above.  If all is well, ANUGA will then import in python.  Any future time you want to use ANUGA, it is basically a matter of opening an Anaconda Prompt and activating the ANUGA environment "activate anuga".
+
+<p>I've recently had consistent sucess in Windows and Linux installing the ANUGA dependencies via conda or Anaconda (https://www.anaconda.com/download/).  I create an ANUGA Anaconda environment, say "anuga" using Anaconda navigator, then at an Anaconda prompt, then "activate anuga" where "anuga here" is whatever the anuga environment is called.  The first time you need to follow the conda instructions in the INSTALL file above.  If all is well, ANUGA will then import in python.  Any future time you want to use ANUGA, it is basically a matter of opening an Anaconda Prompt and activating the ANUGA environment "activate anuga".
 
 2) Using the New Operators:<br>
 Warning 1: These operators (and other modules) are experimental and may have bugs or be broken in unexpected ways.  <br>
