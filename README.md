@@ -8,7 +8,7 @@ See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br
 
 2) Using the New Operators:<br>
 <p> Warning 1: These operators (and other modules) are experimental and may have bugs or be broken in unexpected ways.  <br>
-Warning 2: Sediment mass conservation has been verified to be okay, but otherwise the physics could still be really wrong. In particular, some of the empirical expressions are based on observations of experiments extremely far from the conditions in the big floods being studied here.  Oh, and they were on Earth, not Mars.<br>
+Warning 2: Sediment mass conservation has been verified to be okay, but otherwise the physics could still be really wrong. In particular, some of the empirical expressions are based on observations of experiments extremely far from the conditions in the big floods I'm mostly interested in.  Oh, and these empirical expressions were on Earth, not Mars. They are based on nondimensional scaling, so should at least be reasonable, but there is much that could be going wrong. <br>
 <Br>
 Installing these operators ... I usually just include a copy of the relevant module in whatever scenario I'm running.  Presumably you could install them somewhere else on the path that python looks at and they would work as well.
 
