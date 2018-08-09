@@ -16,4 +16,4 @@ Installing these operators ... I usually just include a copy of the relevant mod
 
 4) Viewing the results:  
 <p>For fast visualization of results, I use AnugaViewer: https://sourceforge.net/projects/anuga/files/anuga_viewer_windows/<br>
-Elevations or other quantities in the domain can also be converted into ArcMap-readable ascii diles. 
+Elevations or other quantities in the domain can also be converted into ArcMap-readable ascii files. 
