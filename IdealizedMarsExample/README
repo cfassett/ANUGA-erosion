@@ -1,0 +1,10 @@
+This is an example scenario for an idealized lake terrain
+
+The required parameters are the lake radius and grain size (both in meters).
+Optional parameters are an initial lake depth multiplier (-m) and initial breach depth/head (-i).
+
+Default is for depth to scale based on lake volumes in FH2008. (However, this is probably too conservative because this is the post-flood 
+volume and virtually every factor will reduced volume after these lakes overflowed).
+
+Example call:
+  python lakeerodeR.py 4000 0.02 -i 6
