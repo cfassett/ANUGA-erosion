@@ -1,0 +1,5 @@
+This is an example scenario for Jezero, with most choices already hardwired (initial elevations, almost all parameters).  
+The two parameters that are set at the command line are initial stage and grain size.
+
+For example, to remake the movie in slide 16, try:
+  python jezero.py 2250 0.04 
