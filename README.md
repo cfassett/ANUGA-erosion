@@ -13,6 +13,8 @@ Warning 2: Sediment mass conservation has been verified to be okay, but otherwis
 Installing these operators ... I usually just include a copy of the relevant module in whatever scenario I'm running.  Presumably you could install them somewhere else on the path that python looks at and they would work as well.
 
 3) Example scenarios:
+a) Jezero
+b) Idealized
 
 4) Viewing the results:  
 <p>For fast visualization of results, I use AnugaViewer: https://sourceforge.net/projects/anuga/files/anuga_viewer_windows/<br>
