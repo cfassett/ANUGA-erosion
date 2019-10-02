@@ -8,7 +8,7 @@ import anuga
 
 
 def finalstats(domain, initialdomain, outfile='outstats.csv'):
-    acrossthebreach=anuga.read_polygon('jezerobreachpoly.csv',closed=False)
+    acrossthebreach=anuga.read_polygon('JezeroData/jezerobreachpoly.csv',closed=False)
     crossspacing=160
     breacherosion=0
     areasum=0
