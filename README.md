@@ -1,19 +1,20 @@
 # ANUGA-erosion
 (Experimental) Operators for adding Erosion to ANUGA hydro, and scenarios for erosion in natural dam-breaching floods on Mars.
 
-<B>NOTE, 7/22/2019:  These operators are now obsolete, and has a few known bugs.  I will upload the next iteration of this code in the next few weeks.  Please contact me if you want more information.</b>
-
+<b>updated, Oct. 2, 2019</b>
 
 1) Notes on installing ANUGA hydro:<br>
 See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br>
 
-<p>I've recently had consistent success in Windows and Linux installing the ANUGA dependencies via conda or Anaconda (https://www.anaconda.com/download/).  I create an ANUGA Anaconda environment, say "anuga" using Anaconda navigator, then at an Anaconda prompt, then "activate anuga" where "anuga here" is whatever the anuga environment is called.  The first time you need to follow the conda instructions in the INSTALL file above.  If all is well, ANUGA will then import in python.  Any future time you want to use ANUGA, it is basically a matter of opening an Anaconda Prompt and activating the ANUGA environment "activate anuga".
+<p>I've recently had consistent success on  multiple Windows and Linux systems installing the ANUGA dependencies via the conda/anaconda (https://www.anaconda.com/download/) instructions.  I create an ANUGA conda environment (make sure to choose python=2.7), following the conda instructions in the INSTALL file above for all the packages that ANUGA needs. Then, when I want to run code callign anuga, I use "conda activate anuga".  {It could be source activate anuga, depending on vagaries of your system setup}.  If all is well, the full ANUGA package will  import in python. 
 
 2) Using the New Operators:<br>
 <p> Warning 1: These operators (and other modules) are experimental and may have bugs or be broken in unexpected ways.  <br>
-Warning 2: Sediment mass conservation has been verified to be okay, but otherwise the physics could still be really wrong. In particular, some of the empirical expressions are based on observations of experiments extremely far from the conditions in the big floods I'm mostly interested in.  Oh, and these empirical expressions were on Earth, not Mars. They are based on nondimensional scaling, so should at least be reasonable, but there is much that could be going wrong. <br>
+Warning 2: Sediment mass conservation is close to okay, although there is still a slight bug that can occur at interfaces where mesh size changes.  The physics, of course, could still be really wrong. In particular, some of the empirical expressions are based on observations of experiments extremely far from the conditions I'm interested in.  Oh, and these empirical expressions were on Earth, not Mars. They are based on nondimensional scaling, so should at least be reasonable, but there is much that could be going wrong. <br>
 <Br>
-Installing these operators ... I usually just include a copy of the relevant module in whatever scenario I'm running.  Presumably you could install them somewhere else on the path that python looks at and they would work as well.
+Installing these operators ... I include a copy of the relevant module file in whatever scenario I'm running.  Presumably you could install them somewhere else on the path that python looks at and they would work as well.
+<br>
+Note that now the model_param.py file is now used to set parameters across modules.
 
 3) Example scenarios:<br>
 a) Idealized terrain
