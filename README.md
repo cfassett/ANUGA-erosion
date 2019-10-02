@@ -19,7 +19,7 @@ Note that now the model_param.py file is now used to set parameters across modul
 <b>3) Example scenarios:</b><br>
 <p>a) Idealized terrain
 <p>b) Jezero
-<p>c) Coho
+<p>c) Coholich flume experiment, LC/LR
 
 <b>4) Viewing the results:</b> 
 <p>For fast visualization of results, I use AnugaViewer: https://sourceforge.net/projects/anuga/files/anuga_viewer_windows/<br>
