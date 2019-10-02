@@ -1,24 +1,27 @@
 """ -----------------------------------------------
 Bedload transport 
 Fassett implementation
+
+9/30/2019
+Not convinced that this version handles different cell areas correctly for conservation.  
+Also need to check the maxrate implementation around the same thing.
+Need to crosscheck this with the Coholich version
+
 ======= """
 
 
 from anuga.operators.base_operator import Operator
 from anuga import Region
-from frictionfunction import *
+from frictionfunctions import *
 import math
 import numpy as np
-np.set_printoptions(threshold='nan')
+from model_params import Wd, Sd, porosity, grainD, frictionscheme, gravity, dthresh, maxrate, bed_tau_crit, m, Ke
 
 
 class bedloadtransport_operator(Operator, Region)  :
        
     def __init__(self,
                  domain,
-                 threshold=0.0,
-                 grainD=0.001,
-                 gravity=3.711,
                  indices=None,
                  polygon=None,
                  center=None,
@@ -31,9 +34,6 @@ class bedloadtransport_operator(Operator, Region)  :
    
 
         Operator.__init__(self, domain, description, label, logging, verbose)
-        self.grainD=grainD
-        self.G=gravity
- 
 
         Region.__init__(self, domain,
                         indices=indices,
@@ -42,20 +42,6 @@ class bedloadtransport_operator(Operator, Region)  :
                         radius=radius,
                         verbose=verbose)
 
-        #-------------------------------------------
-        # set properties
-        #-------------------------------------------
-        self.Wd       = 1000       # water density kg/m3
-        self.Sd       = 2700       # sed grain density kg/m3.  
-        #self.grainD   = 0.05      # Used to define locally, now defining globally
-        #self.G        = self.gravity     # "  "  " " " " " "" " " " "  " " "       
-        self.dthresh  = 0.01       # minimum depth to consider (m)  [could inherit from the domain]
-        self.porosity = 0.200      # I would expect realistic values 0 to 0.5. Could split out an expected porosity for the sediment that is eroded and deposited, if more complication is desired.
-        self.tau_crit = 0.05       # should probably be something like 0.04-0.08
-        self.m        = 1.5        # exponent on sediment transport increase with excess dimensionless shear stress
-        self.Ke       = 4          # leading coefficient on qb*.  Roughly 4 is the Wong and Parker 2006 corrected MPM (their eq 24)
-        self.maxrate  = 0.02       # This is artificial and is designed to keep the erosion from running away aphysically.  This corresponds to ~1 m / minute, which is still ridiculously fast.     
-        
             
         # set some alaises            
         self.stage = self.domain.quantities['stage'].centroid_values        
@@ -78,22 +64,15 @@ class bedloadtransport_operator(Operator, Region)  :
 
     
             #-------------------------------------------
-            # get some useful model parameters
+            # set some useful model parameters and aliases
             #-------------------------------------------   
-            Wd       = self.Wd
-            Sd       = self.Sd
-            R        = (Sd/Wd)-1
-            G        = self.G
-            grainD   = self.grainD
-            dthresh  = self.dthresh        
-            Ke       = self.Ke      
-            tau_crit = self.tau_crit
-            m        = self.m 
-            porosity = self.porosity
-            maxrate  = self.maxrate
+
+            R        = (Sd/Wd)-1.0
+            G        = gravity
+            tau_crit = bed_tau_crit
                        
             dt = self.get_timestep()
-    
+            maxdz    = maxrate*dt
             #-----------------------------------------------------------------------------------------
             # Compute erosion depths during the timestep and update centroid elevations accordingly 
 			# Note this operator is called for each seperate erosion polygon.
@@ -103,17 +82,23 @@ class bedloadtransport_operator(Operator, Region)  :
 			
             ind = (self.depth >= dthresh)                # indices of triangles in polygon (where depth is above depth threshold: depth>dthresh)
             if len(ind)>0:
-                height = self.stage_c - self.elev_c  # store for later use
+                height = self.stage_c[ind] - self.elev_c[ind]  # store for later use
                 cellarea = self.areas[ind]
                 depth = self.depth[ind]
                 xmom = self.xmom[ind]
                 ymom  = self.ymom[ind]
             
                              
-                vel=(np.sqrt((xmom**2+ymom**2))/(depth+1.0e-8)) #velocity in Anuga is magnitude of the momentum vector/depth.  small eta 1.0e-8 is to avoid dividing by zero.
-                sqrteightdivfc=frictionfactor(depth, grainD)    #sqrt(8/fc) where fc is the Darcy-Weisbach friction factor.  I use Wilson et al. 2004's equations.
+                vel=(np.sqrt((xmom**2.0+ymom**2.0))/(depth+1.0e-8)) #velocity in Anuga is magnitude of the momentum vector/depth.  small eta 1.0e-8 is to avoid dividing by zero.
+                
+                if frictionscheme=="wilsonetal":
+                    sqrteightdivfc=frictionfactor_wilsonetal_sq8cf(depth, grainD)      #use frictionfactor function to get friction (cf).
+                elif frictionscheme=="larsenandlamb":
+                    sqrteightdivfc=frictionfactor_larsenandlamb_sq8cf(depth)
+                else:
+                    sqrteightdivfc=frictionfactor_constant_sq8cf(depth)
                 cf=(1.0/sqrteightdivfc)**2.0                   
-                tau_b=Wd*cf*(vel**2)                            #Shear Stress
+                tau_b=Wd*cf*(vel**2.0)                            #Shear Stress
                 tau_star=tau_b/(Wd*R*G*grainD)                  #Dimensionless shear stress
 
                 excessdimshear=(tau_star-tau_crit)
@@ -125,7 +110,7 @@ class bedloadtransport_operator(Operator, Region)  :
                
                 qb_dim_x=np.zeros_like(self.depth)
                 qb_dim_y=np.zeros_like(self.depth)
-                dz=np.zeros_like(self.depth)
+
                 velx=xmom/(depth+1.0e-8)
                 vely=ymom/(depth+1.0e-8)
                 tbscalingx= Wd*cf*vel*velx                      #see Gary Parker's CISMnot2 notes; partitioning of shear stress into X and Y components
@@ -140,49 +125,27 @@ class bedloadtransport_operator(Operator, Region)  :
                 self.sedyforgrad.compute_gradients()
                 self.gradX=self.sedxforgrad.x_gradient
                 self.gradY=self.sedyforgrad.y_gradient			
-                dzin=-(1/(1-porosity))*(self.gradX[ind]+self.gradY[ind])*dt      #exner.
-                dzin[dzin>(maxrate*dt)]=maxrate*dt                       #rate limiters for stability
-                dzin[dzin<(-maxrate*dt)]=-maxrate*dt                     #   "    " 
+   
+                dz=-(1/(1-porosity))*(self.gradX+self.gradY)*dt      #exner.
                 
-                #only allow bedload deposition/erosion in wet cells with at least one wetted neighbors.
-                wettedelements=self.domain.get_wet_elements()  #all indices that are wetted
-                neighbors = self.domain.neighbours[ind]        #neighbours of cells above depth threshold
-                dzcheck=np.any(np.isin(neighbors,wettedelements),axis=1)   #check if the neighbours are in the wettedelements list, then make sure at least one is.  same length as ind.
-                dzin=np.where(dzcheck,dzin,0)                 #if not wetted neighbors, don't entrain.
+                #drycellexcess=np.sum(dz[self.depth<dthresh])        
+                #print drycellexcess
+                dz[self.depth<dthresh]=0.0  #Note!  This is potentially breaking sediment conservation but zeroing 'dry' cells.  Probably minor.
                 
-                dz[ind]=dzin                                  #assign dzs to broader domain.
-                                    
-                conservationcheck=np.sum(dz*self.areas)
-                if conservationcheck>0:
-                    sumerodedvolume=-np.sum(dz[dz<0]*self.areas[dz<0])
-                    sumshouldhaveeroded=sumerodedvolume+conservationcheck
-                    if sumerodedvolume>0:
-                        dz[dz<0]=dz[dz<0]*(sumshouldhaveeroded/sumerodedvolume)
-                    else:
-                        dz=0
-                else:
-                    sumdepositedvolume=np.sum(dz[dz>0]*self.areas[dz>0])
-                    sumshouldhavedeposited=sumdepositedvolume-conservationcheck            
-                    if sumdepositedvolume>0:
-                        dz[dz>0]=dz[dz>0]*(sumshouldhavedeposited/sumdepositedvolume)
-                    else:
-                        dz=0
-                #These conservations checks are to avoid small errors in conservation accumulating.
-                #Simply adds a little extra erosion or deposition proportional to what's happening
-                #to balance things out.
-                
-                newelevs=self.elev+dz
-                self.domain.set_quantity('elevation', newelevs, location='centroids') 
-         
-                newstage=self.stage
-                newstage=newelevs + height
-                self.domain.set_quantity('stage', newstage, location='centroids') 
-                self.domain.set_quantity('height', newstage-newelevs, location='centroids')
-                self.domain.distribute_to_vertices_and_edges()         
-
+                if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights stability problems.
+                    dz *= maxdz/np.max(np.abs(dz))                         #rescales the whole of the dz field by max rate to conserve sediment.  This probably also could break conservation by not taking
+                                                                           #cell area variation into account.
+                self.elev_c[ind] = self.elev_c[ind] + dz[ind]    
+                self.domain.set_quantity('elevation', self.elev_c, location='centroids')                            
+                # Make sure stage is corrected once erosion happens to conserve fluid volume
+                self.stage_c[ind] = self.elev_c[ind] + height                                       
+                self.domain.set_quantity('stage', self.stage_c, location='centroids')
+                self.domain.distribute_to_vertices_and_edges()
+ 
               
 
         return (updated)      
+              
         
     def parallel_safe(self):
         """If Operator is applied independently on each cell and

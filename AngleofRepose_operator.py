@@ -1,6 +1,15 @@
 """ -----------------------------------------------
 Angle of Repose operator
 Fassett implementation
+
+9/30/2019
+Note this version is a little loose on how it does sediment conservation, particularly between
+cells of different area.  If a little bit is lost in the domain, it can be added back in distributed 
+among cells, not locally. 
+
+The Coholich AoR version attempted to correct this, but it is much slower and NOT more stable, some 
+for the time being I have reverted to this.
+
 ======= """
 
 
@@ -10,13 +19,12 @@ from anuga import Region
 import math
 import numpy as np
 import numpy.ma as ma
-
+from model_params import angleofrepose
 
 
 class AoR_operator(Operator, Region):
     def __init__(self,
                  domain,
-                 threshold=0.0,
                  indices=None,
                  polygon=None,
                  center=None,
@@ -43,9 +51,7 @@ class AoR_operator(Operator, Region):
         """
         Applies Angle of Repose function to domain
         """
-        
-        updated = True             # flag called OK
-        
+              
         if self.indices is not []:     # empty list no polygon - return
             self.AofR()            
 
@@ -58,12 +64,12 @@ class AoR_operator(Operator, Region):
         otherwise apply for the specific indices within the  polygon
         """
         
-        self.angleofrepose = 30        #threshold angle of repose in degrees
+
         self.relaxationfactor = 0.5    #Max value=0.5; Range=0-0.5.  This controls how quickly to handle sediment collapsing downhill to relax oversteepened slopes.  
                                        
                                        #Could add back in an iterator that makes this operator repeat itself, too, since a single iteration does NOT fully relax all oversteepened slopes. 
                                        #Could set in a way that is cognizant of the timestep, perhaps coupled with the number of iterations.   dt = self.get_timestep(), relaxationfactor=somenumber, number of iterations=some number
-        self.arperc=math.tan(math.radians(self.angleofrepose))  # in %
+        self.arperc=math.tan(math.radians(angleofrepose))  # in %
                     
         # set some alaises            
         self.stage = self.domain.quantities['stage'].centroid_values   

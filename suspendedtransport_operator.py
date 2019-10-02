@@ -6,17 +6,15 @@ Fassett implementation
 
 from anuga.operators.base_operator import Operator
 from anuga import Region
-from frictionfunction import *
+from frictionfunctions import *
 
 import math
 import numpy as np
+from model_params import Wd, Sd, porosity, gravity, grainD, susp_tau_crit, gamma0, maxconc, mu, maxrate, dthresh, frictionscheme
 
 class suspendedtransport_operator(Operator, Region):
     def __init__(self,
-                 domain,
-                 threshold=0.0,
-                 grainD=0.001,   #defaults.  Note that this SHOULD be overridden by the call
-                 gravity=3.711,  # see below           
+                 domain,      
                  indices=None,
                  polygon=None,
                  center=None,
@@ -29,34 +27,13 @@ class suspendedtransport_operator(Operator, Region):
    
 
         Operator.__init__(self, domain, description, label, logging, verbose)
-        self.grainD=grainD
-        self.G=gravity
- 
 
         Region.__init__(self, domain,
                         indices=indices,
                         polygon=polygon,
                         center=center,
                         radius=radius,
-                        verbose=verbose)
-
-        #-------------------------------------------
-        # set properties
-        #-------------------------------------------
-        self.Wd       = 1000       # water density kg/m3
-        self.Sd       = 2700       # sed grain density kg/m3.  
-        #self.grainD   = 0.05      # Used to define locally, now defining globally
-        #self.G        = self.gravity     # "  "  " " " " " "" " " " "  " " "       
-        self.dthresh  = 0.01       # minimum depth to consider (m)  [Could inherit from the domain.]
-        self.porosity = 0.20       # I would expect realistic values 0 to 0.5. Could split out an expected porosity for the sediment that is eroded and deposited, if more complication is desired.
-        self.maxrate  = 0.02       # This is artificial and is designed to keep the erosion from running away aphysically.
-        
-        self.gamma0   = 0.0024     # suspended sediment gamma0 (Smith and McLean)
-        self.tau_crit = 0.05       # Tau_crit for entrainment
-        self.mu       = 8.9e-4     # Dynamic viscosity of water
-        self.maxconc  = 0.30       # Concentrations are artificially limited to 30% by volume.  (Note this is a huge number by mass, especially since I'm not back-calculating the effect on the flow!)
-        
-        
+                        verbose=verbose)        
         
             
         # set some alaises            
@@ -82,20 +59,11 @@ class suspendedtransport_operator(Operator, Region):
             self.sediment_flux()
     
             #-------------------------------------------
-            # get some useful model parameters
+            # set some useful model parameters and names
             #-------------------------------------------   
-            Wd       = self.Wd
-            Sd       = self.Sd
-            R        = (Sd/Wd)-1
-            G        = self.G
-            grainD   = self.grainD
-            dthresh  = self.dthresh        
-            tau_crit = self.tau_crit
-            porosity = self.porosity
-            maxrate  = self.maxrate
-            gamma0   = self.gamma0
-            maxconc  = self.maxconc
-            mu       = self.mu
+            R        = (Sd/Wd)-1.0       #relative density
+            G        = gravity         #alias           
+            tau_crit = susp_tau_crit   #alias            
             settlingvelocity = self.settlingvelocityfunc(Wd,Sd,G,mu,grainD)
                       
             dt = self.get_timestep()
@@ -104,7 +72,6 @@ class suspendedtransport_operator(Operator, Region):
             # Compute erosion depths during the timestep and update centroid elevations accordingly 
 			# Note this operator is called for each seperate erosion polygon.
             #-----------------------------------------------------------------------------------------
-            
             
 
 
@@ -116,15 +83,21 @@ class suspendedtransport_operator(Operator, Region):
             xmom = self.xmom[ind]
             ymom  = self.ymom[ind]
             conc = self.conc[ind]                       
-            vel=(np.sqrt((xmom**2+ymom**2))/(depth+1.0e-8))   #velocity in Anuga is magnitude of the momentum vector/depth.  small eta 1.0e-8 is to avoid dividing by zero.
+            vel=(np.sqrt((xmom**2.0+ymom**2.0))/(depth+1.0e-8))   #velocity in Anuga is magnitude of the momentum vector/depth.  small eta 1.0e-8 is to avoid dividing by zero.
             
-            sqrteightdivfc=frictionfactor(depth, grainD)      #use frictionfactor function to get friction (cf).  
-            cf=(1.0/sqrteightdivfc)**2.0                      #sqrt(8/fc) --> fc is the Darcy-Weisbach friction factor.  I use Wilson et al. 2004's equations.
-            tau_b=Wd*cf*(vel**2)                              #Shear Stress
+            if frictionscheme=="wilsonetal":
+                sqrteightdivfc=frictionfactor_wilsonetal_sq8cf(depth, grainD)      #use frictionfactor function to get friction (cf).
+            elif frictionscheme=="larsenandlamb":
+                sqrteightdivfc=frictionfactor_larsenandlamb_sq8cf(depth)
+            else:
+                sqrteightdivfc=frictionfactor_constant_sq8cf(depth)
+                
+            cf=(1.0/sqrteightdivfc)**2.0                      
+            tau_b=Wd*cf*(vel**2.0)                              #Shear Stress
             tau_star=tau_b/(Wd*R*G*grainD)                    #Dimensionless shear stress
 
             entrainmentrate_star=np.zeros_like(tau_star)
-            entrainmentrate_star[tau_star>tau_crit]=0.65*gamma0*(((tau_star[tau_star>tau_crit]/tau_crit)-1)/(1+gamma0*((tau_star[tau_star>tau_crit]/tau_crit)-1)))   #Smith and McLean Entraiment (dimensionless)
+            entrainmentrate_star[tau_star>tau_crit]=0.65*gamma0*(((tau_star[tau_star>tau_crit]/tau_crit)-1.0)/(1.0+gamma0*((tau_star[tau_star>tau_crit]/tau_crit)-1.0)))   #Smith and McLean Entraiment (dimensionless)
             entrainmentrate=settlingvelocity*entrainmentrate_star
             
             shearvelocity=np.sqrt(tau_b/Wd)
@@ -141,9 +114,9 @@ class suspendedtransport_operator(Operator, Region):
             depositionrate=settlingvelocity*bottomconcentration
             
             #artificial rate limiter:
-            depositionrate[(entrainmentrate-depositionrate)>maxrate]=0
+            depositionrate[(entrainmentrate-depositionrate)>maxrate]=0.0
             entrainmentrate[(entrainmentrate-depositionrate)>maxrate]=maxrate
-            entrainmentrate[(depositionrate-entrainmentrate)>maxrate]=0
+            entrainmentrate[(depositionrate-entrainmentrate)>maxrate]=0.0
             depositionrate[(depositionrate-entrainmentrate)>maxrate]=maxrate
             
            
@@ -163,7 +136,7 @@ class suspendedtransport_operator(Operator, Region):
             newconcentrations[newconcentrations>maxconc]=maxconc
             extraz=extra*depth
             
-            dz=-(1/(1-porosity))*((entrainmentrate-depositionrate)*dt-extraz)
+            dz=-(1.0/(1.0-porosity))*((entrainmentrate-depositionrate)*dt-extraz)
                        
             concentrations=self.conc
             concentrations[ind]=newconcentrations   
@@ -221,10 +194,8 @@ class suspendedtransport_operator(Operator, Region):
         Negative edge fluxes are inwards and must use the concentration of the neighbour
         Positive edge fluxes are outwards and use the concentration of the cell
         """
-        maxconc=self.maxconc
-        porosity=self.porosity
         depth = self.domain.quantities['height'].centroid_values
-        ind = (depth >= self.dthresh )        
+        ind = (depth >= dthresh )        
         depth_e = self.domain.quantities['height'].edge_values  
         xmom_e = self.domain.quantities['xmomentum'].edge_values
         ymom_e = self.domain.quantities['ymomentum'].edge_values

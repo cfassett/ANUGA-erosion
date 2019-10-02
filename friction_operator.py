@@ -10,17 +10,13 @@ from anuga import Region
 
 import math
 import numpy as np
-from frictionfunction import *
-np.set_printoptions(threshold='nan')
-
+from frictionfunctions import *
+from model_params import dthresh, gravity, grainD, constantn, frictionscheme 
 
 class friction_operator(Operator, Region)  :
        
     def __init__(self,
                  domain,
-                 threshold=0.0,                 
-                 grainD=0.001,
-                 gravity=3.711,
                  indices=None,
                  polygon=None,
                  center=None,
@@ -33,9 +29,6 @@ class friction_operator(Operator, Region)  :
    
 
         Operator.__init__(self, domain, description, label, logging, verbose)
-        self.grainD=grainD
-        self.G=gravity
- 
 
         Region.__init__(self, domain,
                         indices=indices,
@@ -44,14 +37,7 @@ class friction_operator(Operator, Region)  :
                         radius=radius,
                         verbose=verbose)
 
-        #-------------------------------------------
-        # set properties
-        #-------------------------------------------
-        self.dthresh  = 0.01      # minimum depth to consider (m)
-        #self.grainD   = 0.05      # Used to define locally, now defining globally
-        #self.G        = self.gravity     # "  "  " " " " " "" " " " "  " " "       
-        self.ndefault = 0.0545     # this is only used for zero depth cells, so probably irrelevant.
-            
+           
         # set some alaises            
         self.depth = self.domain.quantities['height'].centroid_values
 
@@ -68,23 +54,29 @@ class friction_operator(Operator, Region)  :
         if self.indices is not []:     # empty list no polygon - return
    
             #-------------------------------------------
-            # get some useful model parameters
+            # model parameters
             #-------------------------------------------   
-            dthresh  = self.dthresh 
-            grainD   = self.grainD 
-            G        = self.G
-            nd       = self.ndefault
+            #dthresh  
+            #grainD 
+            #gravity
+            nd       = constantn
             
             # Now lets work where water actually is.
             ind = (self.depth >= dthresh)                # indices of triangles in polygon (where depth is above depth threshold: depth>dthresh)
             depth = self.depth[ind]
             
-            sqrteightdivfc=frictionfactor(depth, grainD)
-            oneovern = sqrteightdivfc*(G**0.5)*(depth**-(1.0/6.0))                   #This is 1/(Manning friction factor) -- (1/n) -- for a given sqrt(8/fc).
+            if frictionscheme=="wilsonetal":
+                sqrteightdivfc=frictionfactor_wilsonetal_sq8cf(depth, grainD)
+            elif frictionscheme=="larsenandlamb":
+                sqrteightdivfc=frictionfactor_larsenandlamb_sq8cf(depth)
+            else:
+                sqrteightdivfc=frictionfactor_constant_sq8cf(depth)
+            
+            oneovern = sqrteightdivfc*(gravity**0.5)*(depth**-(1.0/6.0))                   #This is 1/(Manning friction factor) -- (1/n) -- for a given sqrt(8/fc).
             n = 1.0/oneovern                                                         #The inverse of the previous line is the actual n.
             newfriction = np.zeros_like(self.depth)+nd
             newfriction[ind] = n
-            self.domain.set_quantity('friction', newfriction, location='centroids')
+            self.domain.set_quantity('friction', newfriction, location='centroids', smooth=True)
            
         return (updated)
                 
@@ -94,6 +86,3 @@ class friction_operator(Operator, Region)  :
         """
         
         return True
-        
-                        
-
