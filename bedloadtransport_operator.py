@@ -128,30 +128,31 @@ class bedloadtransport_operator(Operator, Region)  :
    
                 dz=-(1/(1-porosity))*(self.gradX+self.gradY)*dt      #exner.
                 dz[self.depth<dthresh]=0.0
-                averageachange = self.areas[abs(dz)>0].mean()
-                dz[dz>0]=dz[dz>0]*averageachange/self.areas[dz>0]
-                dz[dz<0]=dz[dz<0]*averageachange/self.areas[dz<0]
-                conserror=np.sum(dz[dz>0]*self.areas[dz>0])+np.sum(dz[dz<0]*self.areas[dz<0])  #volume extra dep (+) or eroded (-)
-
                 numoferoding=np.count_nonzero(dz<0)
                 numofdeposit=np.count_nonzero(dz>0)
+                if (numoferoding>0) and (numofdeposit>0):            #stop if there isn't both erosion and deposition.
+                    averageachange = self.areas[abs(dz)>0].mean()
+                    dz[dz>0]=dz[dz>0]*averageachange/self.areas[dz>0]
+                    dz[dz<0]=dz[dz<0]*averageachange/self.areas[dz<0]
+                    conserror=np.sum(dz[dz>0]*self.areas[dz>0])+np.sum(dz[dz<0]*self.areas[dz<0])  #volume extra dep (+) or eroded (-)
 
 
-# was trying to split conservation fix between erosion and deposition 50/50 gave up.
-#               dz[dz<0]=dz[dz<0]-0.5*conserror/(self.areas[dz<0]*numoferoding)  OLD
-                dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
 
 
-                
-                if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights stability problems.
-                    dz *= maxdz/np.max(np.abs(dz))                         #rescales the whole of the dz field by max rate to conserve sediment.  This probably also could break conservation by not taking
-                                                                           #cell area variation into account.
-                self.elev_c[ind] = self.elev_c[ind] + dz[ind]    
-                self.domain.set_quantity('elevation', self.elev_c, location='centroids')                            
-                # Make sure stage is corrected once erosion happens to conserve fluid volume
-                self.stage_c[ind] = self.elev_c[ind] + height                                       
-                self.domain.set_quantity('stage', self.stage_c, location='centroids')
-                self.domain.distribute_to_vertices_and_edges()
+    # was trying to split conservation fix between erosion and deposition 50/50 gave up.
+    #               dz[dz<0]=dz[dz<0]-0.5*conserror/(self.areas[dz<0]*numoferoding)  OLD
+                    dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
+
+
+                    
+                    if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights a potential stability problems.
+                        dz *= maxdz/np.max(np.abs(dz))                         
+                    self.elev_c[ind] = self.elev_c[ind] + dz[ind]    
+                    self.domain.set_quantity('elevation', self.elev_c, location='centroids')                            
+                    # Make sure stage is corrected once erosion happens to conserve fluid volume
+                    self.stage_c[ind] = self.elev_c[ind] + height                                       
+                    self.domain.set_quantity('stage', self.stage_c, location='centroids')
+                    self.domain.distribute_to_vertices_and_edges()
  
               
 
