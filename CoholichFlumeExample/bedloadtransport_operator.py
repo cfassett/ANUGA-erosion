@@ -137,15 +137,10 @@ class bedloadtransport_operator(Operator, Region)  :
                 numofdeposit=np.count_nonzero(dz>0)
 
 
-                if conserror>0:
-# was trying to split conservation fix between erosion and deposition, gave up.
-#                   dz[dz<0]=dz[dz<0]-conserror/(self.areas[dz<0]*numoferoding)
-                    dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
-                else:
-#                   dz[dz<0]=dz[dz<0]-conserror/(self.areas[dz<0]*numoferoding)
-                    dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
+# was trying to split conservation fix between erosion and deposition 50/50 gave up.
+#               dz[dz<0]=dz[dz<0]-0.5*conserror/(self.areas[dz<0]*numoferoding)  OLD
+                dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
 
-                conserrorb=np.sum(dz[dz>0]*self.areas[dz>0])+np.sum(dz[dz<0]*self.areas[dz<0])  #volume extra dep (+) or eroded (-)
 
                 
                 if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights stability problems.
