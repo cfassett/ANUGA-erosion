@@ -1,6 +1,8 @@
 This is an example scenario for Jezero, with most choices hardwired in the model_param file. 
 
 The only parameter set at the command line in this version is the initial stage (actually -1*initialstage). 
--2260 almost won't flood, so I usually start at 2250, like below:
+-2260 almost won't flood, so I usually start at something like 2240 (which is -2240), like below:
 
-  python jezero.py 2250
+  python jezero.py 2240
+  
+It is easiest to get the flood going with pebbles 1 cm or smaller.  Larger grains seem to be nonphysically resistant in the model at the beginning of the flow.  Of course, 1 cm may be too fine-grained and erosive as the flood really kicks off.
