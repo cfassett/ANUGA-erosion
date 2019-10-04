@@ -127,10 +127,26 @@ class bedloadtransport_operator(Operator, Region)  :
                 self.gradY=self.sedyforgrad.y_gradient			
    
                 dz=-(1/(1-porosity))*(self.gradX+self.gradY)*dt      #exner.
-                
-                #drycellexcess=np.sum(dz[self.depth<dthresh])        
-                #print drycellexcess
-                dz[self.depth<dthresh]=0.0  #Note!  This is potentially breaking sediment conservation but zeroing 'dry' cells.  Probably minor.
+                dz[self.depth<dthresh]=0.0
+                averageachange = self.areas[abs(dz)>0].mean()
+                dz[dz>0]=dz[dz>0]*averageachange/self.areas[dz>0]
+                dz[dz<0]=dz[dz<0]*averageachange/self.areas[dz<0]
+                conserror=np.sum(dz[dz>0]*self.areas[dz>0])+np.sum(dz[dz<0]*self.areas[dz<0])  #volume extra dep (+) or eroded (-)
+
+                numoferoding=np.count_nonzero(dz<0)
+                numofdeposit=np.count_nonzero(dz>0)
+
+
+                if conserror>0:
+# was trying to split conservation fix between erosion and deposition, gave up.
+#                   dz[dz<0]=dz[dz<0]-conserror/(self.areas[dz<0]*numoferoding)
+                    dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
+                else:
+#                   dz[dz<0]=dz[dz<0]-conserror/(self.areas[dz<0]*numoferoding)
+                    dz[dz>0]=dz[dz>0]-conserror/(self.areas[dz>0]*numofdeposit)
+
+                conserrorb=np.sum(dz[dz>0]*self.areas[dz>0])+np.sum(dz[dz<0]*self.areas[dz<0])  #volume extra dep (+) or eroded (-)
+
                 
                 if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights stability problems.
                     dz *= maxdz/np.max(np.abs(dz))                         #rescales the whole of the dz field by max rate to conserve sediment.  This probably also could break conservation by not taking
