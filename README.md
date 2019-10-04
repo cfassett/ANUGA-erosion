@@ -1,7 +1,7 @@
 # ANUGA-erosion
 (Experimental) Operators for adding Erosion to ANUGA hydro, and scenarios for erosion in natural dam-breaching floods on Mars.
 
-<b>updated, Oct. 2, 2019</b>
+<b>New update, Oct. 4, 2019</b>
 
 <b>1) Notes on installing ANUGA hydro:</b><br>
 See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br>
@@ -10,7 +10,7 @@ See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br
 
 <b>2) Using the New Operators:</b><br>
 <p>Warning 1: Obviously, these operators (and other modules) are experimental and may have bugs or be broken in unexpected ways.  
-<p>Warning 2: Sediment mass conservation is close to okay, but there is still a slight known problem in bedload transport.  In particular,  there is a breakdown in conservation at interfaces where triangle size changes.  This is a bear to solve and has bedeviled me for at least a year.
+<p>Warning 2: Sediment mass conservation is close to okay, but there is are some kludgey solutions to force this.  There are definitely better {more fundamental} ways to solve this for bedload transport, that I can't make work.   This is a bear to solve and has bedeviled me for two years.
 <p>Warning 3: Some of the empirical expressions are potentially based on observations of experiments extremely far from the conditions of interest.  Oh, and these empirical expressions were on Earth, not Mars. They are based on nondimensional scaling, so should at least be reasonable, but there is much that could be going wrong. <br>
 
 <p>Using these operators ... I include a copy of the relevant module file in whatever scenario I'm running.  Presumably you could install them somewhere else on the path that python looks at and they would work as well.
