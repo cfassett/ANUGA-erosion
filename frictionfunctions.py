@@ -19,7 +19,7 @@ def frictionfactor_wilsonetal_sq8cf(depth, grainD):
     elif grainD > 0.002:
         sqrteightdivfc=5.75*np.log10(depth/grainD)+3.514   #Chosen from Wilson et al. eq 14.  gravel
     elif grainD > 0.0001:
-        sqrteightdivfc=8.46*np.log10((depth/grainD)**0.1005)   #Chosen from Wilson et al. eq 13.  sand
+        sqrteightdivfc=8.46*(depth/grainD)**0.1005   #Chosen from Wilson et al. eq 13.  sand
     else:
         raise ValueError('The grain diameter is set too small.')
     
