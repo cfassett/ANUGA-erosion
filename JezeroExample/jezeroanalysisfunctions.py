@@ -22,7 +22,7 @@ def finalstats(domain, initialdomain, outfile='outstats.csv'):
     elevdiff=domain.quantities['elevation'].centroid_values-initialdomain.quantities['elevation'].centroid_values  #negative values are eroded, positive values are deposited
     finalremovedvolume=-np.sum(elevdiff[elevdiff<0]*domain.areas[elevdiff<0])
     
-    transportedmask=domain.get_centroid_coordinates()[:,0]>54300
+    transportedmask=domain.get_centroid_coordinates(absolute=True)[:,0]>54300
     heights=(domain.quantities['stage'].centroid_values-domain.quantities['elevation'].centroid_values)
     transportedvolume=(np.where(heights>0,heights,0)*domain.areas)[transportedmask].sum()
 
