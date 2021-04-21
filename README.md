@@ -1,7 +1,9 @@
 # ANUGA-erosion
 (Experimental) Operators for adding Erosion to ANUGA hydro, and scenarios for erosion in natural dam-breaching floods on Mars.
 
-<b>New update, Oct. 4, 2019</b>
+<b>Minor bug fixes, April 2021.</b>
+
+<b>Last major update, Oct. 4, 2019</b>
 
 <b>1) Notes on installing ANUGA hydro:</b><br>
 See https://github.com/GeoscienceAustralia/anuga_core/blob/master/INSTALL.rst<br>
