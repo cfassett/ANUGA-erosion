@@ -145,7 +145,7 @@ class bedloadtransport_operator(Operator, Region)  :
 
 
                     
-                    if np.max(np.abs(dz))>maxdz:                       #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights a potential stability problems.
+                    if np.max(np.abs(dz))>maxdz:             #rate limiter.  Maxrate is the most that a cell can change in a timestep.  This fights a potential stability problems.
                         dz *= maxdz/np.max(np.abs(dz))                         
                     self.elev_c[ind] = self.elev_c[ind] + dz[ind]    
                     self.domain.set_quantity('elevation', self.elev_c, location='centroids')                            

@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-import os, optparse, subprocess, sys, tempfile, ogr, osr, gdal
+from __future__ import print_function
+
+import os, optparse, subprocess, sys, tempfile
+
+# import osgeo.ogr as ogr
+# import osgeo.osr as osr
+# import osgeo.gdal as gdal
 
 import copy
 import anuga
@@ -14,10 +20,10 @@ from model_params import gravity, grainD, constantn
 
 
 def man(option, opt, value, parser):
-    print >>sys.stderr, parser.usage
-    print >>sys.stderr, '''\
+    print (parser.usage, file=sys.stderr)
+    print ('''\
 This program does lake erosion in ANUGA.  
-'''
+''', file=sys.stderr)
     sys.exit()
 
 class Usage(Exception):
@@ -69,7 +75,7 @@ def main():
             domain = anuga.Domain(meshname, use_cache=False, evolved_quantities = evolved_quantities)
             domain.g = anuga.g  # make sure the domain inherits the package's gravity.
 
-            print 'Number of triangles = ', len(domain)
+            print ('Number of triangles = ', len(domain))
 
             def find_nearest(array, value):
                 array = np.asarray(array)
@@ -158,21 +164,21 @@ def main():
             count=0
             volthresh=1000
             for t in domain.evolve(yieldstep=ystep, finaltime=ftime):
-                print domain.timestepping_statistics()
-                print 'xmom:'+str(domain.get_quantity('xmomentum').get_values(interpolation_points=[[2*lakeradius,lakeradius]], location='centroids'))   
+                print (domain.timestepping_statistics())
+                print ('xmom:'+str(domain.get_quantity('xmomentum').get_values(interpolation_points=[[2*lakeradius,lakeradius]], location='centroids')))   
                 volcurr=np.sum(domain.quantities['elevation'].centroid_values*domain.areas)
                 breacherosion=domain.get_quantity('elevation').get_values(interpolation_points=[[2*lakeradius,lakeradius]], location='centroids')-initial
-                print 'erosion: '+str(breacherosion)
+                print ('erosion: '+str(breacherosion))
                 volsed=np.sum(domain.quantities['concentration'].centroid_values*domain.quantities['height'].centroid_values*domain.areas)            
                 conservation=(volcurr+volsed-voltotal)/voltotal
-                print 'conservation: '+'{:.8%}'.format(conservation)
+                print ('conservation: '+'{:.8%}'.format(conservation))
                 if (volsed<volthresh)&(count>0):
-                    print "No sediment moving...ending..."
+                    print ("No sediment moving...ending...")
                     break
                 count=count+1
             polyline=[[2*lakeradius,lakeradius-2*initbreachwidth],[2*lakeradius,lakeradius+2*initbreachwidth]]
             time, Q = anuga.get_flow_through_cross_section(name+'.sww',polyline)
-            print Q
+            print (Q)
 
             initname="initial_"+str(lakeradius)+"_"+str(grainD*1000)+"mm"+".asc"
             finname="final_"+str(lakeradius)+"_"+str(grainD*1000)+"mm"+".asc"
@@ -190,12 +196,12 @@ def main():
             np.save('XymV.npy', domain.quantities['ymomentum'].vertex_values)
             np.save('XstageV.npy', domain.quantities['stage'].vertex_values)
 
-        except optparse.OptionError, msg:
-            raise Usage(msg)
+        except optparse.OptionError as err:
+            raise Usage(err.msg)
 
-    except Usage, err:
-        print >>sys.stderr, err.msg
-        # print >>sys.stderr, "for help use --help"
+    except Usage as err:
+        print (err.msg, file=sys.stderr)
+        # print ("for help use --help", file=sys.stderr)
         return 2
 
 if __name__ == "__main__":

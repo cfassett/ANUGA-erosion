@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import anuga, copy
 import numpy as np
 import math
@@ -52,7 +54,7 @@ evolved_quantities =  ['stage', 'xmomentum', 'ymomentum', 'concentration', 'sedv
 domain = anuga.Domain(meshname, use_cache=False, evolved_quantities = evolved_quantities)
 domain.g = anuga.g  # make sure the domain inherits the package's gravity.
 
-print 'Number of triangles = ', len(domain)
+print ('Number of triangles = ', len(domain))
 
 def find_nearest(array, value):
     array = np.asarray(array)
@@ -155,15 +157,15 @@ count=0
 ystep=1.0
 ftime=80.0
 for t in domain.evolve(yieldstep=ystep, finaltime=ftime):
-    print domain.timestepping_statistics()
+    print (domain.timestepping_statistics())
     volume = (domain.quantities['stage'].get_integral()-domain.quantities['elevation'].get_integral())
     volume2 = domain.quantities['stage'].get_integral(region=lakeregion0)-domain.quantities['elevation'].get_integral(region=lakeregion0)
     volume3 = domain.quantities['stage'].get_integral(region=nextregion0)-domain.quantities['elevation'].get_integral(region=nextregion0)
     volume4 = domain.quantities['stage'].get_integral(region=endregion0)-domain.quantities['elevation'].get_integral(region=endregion0)
-    print str(t)+","+str(volume)+","+str(volume2)+","+str(volume3)+","+str(volume4)
+    print (str(t)+","+str(volume)+","+str(volume2)+","+str(volume3)+","+str(volume4))
     if t==21: fixed_inflow.set_Q(1.0*0.00001667)
     if t==28: fixed_inflow.set_Q(0.0)
-    print fixed_inflow.get_Q()
+    print (fixed_inflow.get_Q())
 
     count=count+1
     
