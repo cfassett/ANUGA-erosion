@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import optparse, sys
 import copy
 import anuga
@@ -13,10 +15,10 @@ from model_params import grainD, gravity, constantn
 
 
 def man(option, opt, value, parser):
-    print >>sys.stderr, parser.usage
-    print >>sys.stderr, '''\
+    print (parser.usage, file=sys.stderr)
+    print ('''\
 This program does lake erosion in ANUGA.  
-'''
+''', file=sys.stderr)
     sys.exit()
 
 class Usage(Exception):
@@ -91,24 +93,24 @@ def main():
             breachpoint=[[19080.340,1097556.781]]
             initialdomain=copy.deepcopy(domain)
             initial=domain.get_quantity('elevation').get_values(interpolation_points=breachpoint, location='centroids')
-            print str(initial)
+            print (str(initial))
             ystep=300.0
             ftime=86400.0*5.0
             polyline=[[40000,1090000],[15000,1120000]]
             count=0
             for t in domain.evolve(yieldstep=ystep, finaltime=ftime):
-                print domain.timestepping_statistics()
-                print 'xmom:'+str(domain.get_quantity('xmomentum').get_values(interpolation_points=breachpoint, location='centroids'))
+                print (domain.timestepping_statistics())
+                print ('xmom:'+str(domain.get_quantity('xmomentum').get_values(interpolation_points=breachpoint, location='centroids')))
                 breacherosion=domain.get_quantity('elevation').get_values(interpolation_points=breachpoint, location='centroids')-initial
-                print 'erosion: '+str(breacherosion)
+                print ('erosion: '+str(breacherosion))
                 volcurr=np.sum(domain.quantities['elevation'].centroid_values*domain.areas)
                 volsed=np.sum(domain.quantities['concentration'].centroid_values*domain.quantities['height'].centroid_values*domain.areas)            
                 conservation=(volcurr+volsed-voltotal)/voltotal
-                print 'conservation: '+'{:.8%}'.format(conservation)
+                print ('conservation: '+'{:.8%}'.format(conservation))
                 count=count+1
                 
             time, Q = anuga.get_flow_through_cross_section(name+'.sww',polyline)
-            print Q
+            print (Q)
 
             initname="initial_"+name+".asc"
             finname="final_"+name+".asc"
@@ -128,12 +130,12 @@ def main():
             np.save('XymV.npy', domain.quantities['ymomentum'].vertex_values)
             np.save('XstageV.npy', domain.quantities['stage'].vertex_values)
 
-        except optparse.OptionError, msg:
-            raise Usage(msg)
+        except optparse.OptionError as err:
+            raise Usage(err.msg)
 
-    except Usage, err:
-        print >>sys.stderr, err.msg
-        # print >>sys.stderr, "for help use --help"
+    except Usage as err:
+        print (err.msg, file=sys.stderr)
+        # print ("for help use --help", file=sys.stderr)
         return 2
 
 if __name__ == "__main__":

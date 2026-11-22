@@ -2,6 +2,9 @@
 Analysis functions
 Fassett implementation
 ======= """
+
+from __future__ import print_function
+
 import numpy as np
 import anuga
 
@@ -27,9 +30,9 @@ def finalstats(domain, initialdomain, outfile='outstats.csv'):
     transportedvolume=(np.where(heights>0,heights,0)*domain.areas)[transportedmask].sum()
 
     
-    print 'Breach Erosion Depth (m): '+str(-breacherosion)
-    print 'Cross-sectional Area (m^2): '+str(areasum)
-    print 'Outlet volume (m^3): '+str(finalremovedvolume)
-    print 'Drained volume (m^3):' +str(transportedvolume)
+    print ('Breach Erosion Depth (m): '+str(-breacherosion))
+    print ('Cross-sectional Area (m^2): '+str(areasum))
+    print ('Outlet volume (m^3): '+str(finalremovedvolume))
+    print ('Drained volume (m^3):' +str(transportedvolume))
     with open(outfile, 'a') as the_file:
         the_file.write(domain.get_name()+','+str(-breacherosion)+','+str(areasum)+','+str(finalremovedvolume)+','+str(transportedvolume)+'\n')
